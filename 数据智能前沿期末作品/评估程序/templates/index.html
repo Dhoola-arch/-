@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>糖尿病风险评估</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36D399',
+                        warning: '#FF9F1C',
+                        danger: '#F87272',
+                        neutral: '#64748B',
+                        'bg-light': '#F8FAFC',
+                        'card-light': '#FFFFFF',
+                        'border-light': '#E2E8F0'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
+                        'card-hover': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .bg-gradient-blue {
+                background: linear-gradient(135deg, #165DFF 0%, #0A3CA6 100%);
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-navbar {
+                transition: all 0.3s ease;
+            }
+            .scale-hover {
+                transition: transform 0.3s ease;
+            }
+            .scale-hover:hover {
+                transform: scale(1.02);
+            }
+            .risk-indicator {
+                height: 24px;
+                border-radius: 12px;
+                background-color: #E2E8F0;
+                position: relative;
+                overflow: hidden;
+            }
+            .risk-progress {
+                height: 100%;
+                border-radius: 12px;
+                transition: width 1.5s ease-in-out;
+            }
+            .risk-low {
+                background-color: #36D399;
+            }
+            .risk-medium {
+                background-color: #FF9F1C;
+            }
+            .risk-high {
+                background-color: #F87272;
+            }
+            .card-reveal {
+                opacity: 0;
+                transform: translateY(20px);
+                transition: opacity 0.5s ease, transform 0.5s ease;
+            }
+            .card-reveal.active {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-bg-light text-gray-800">
+    <!-- 导航栏 -->
+    <nav id="navbar" class="fixed w-full z-50 transition-navbar bg-white/90 backdrop-blur-sm shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-heartbeat text-primary text-2xl"></i>
+                <span class="text-xl font-bold text-gray-800">健康卫士</span>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#" class="text-gray-600 hover:text-primary transition-colors">首页</a>
+                <a href="#" class="text-gray-600 hover:text-primary transition-colors">关于糖尿病</a>
+                <a href="#" class="text-gray-600 hover:text-primary transition-colors">健康资讯</a>
+                <a href="#" class="text-gray-600 hover:text-primary transition-colors">联系我们</a>
+            </div>
+            <button class="md:hidden text-gray-600 focus:outline-none">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 英雄区域 -->
+    <section class="pt-24 pb-16 bg-gradient-blue text-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold mb-6 text-shadow fade-in">糖尿病风险评估</h1>
+                <p class="text-[clamp(1rem,2vw,1.25rem)] mb-8 opacity-90 fade-in delay-100">
+                    通过简单的健康信息，快速评估您的糖尿病风险，并获取个性化健康建议
+                </p>
+                <a href="#assessment-form" class="inline-block bg-white text-primary px-8 py-3 rounded-full font-medium shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 fade-in delay-200">
+                    开始评估 <i class="fa fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 评估表单 -->
+    <section id="assessment-form" class="py-16 -mt-8">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-card p-8 scale-hover">
+                <div class="text-center mb-10">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-4">健康信息填写</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">请填写以下健康信息，我们将为您提供专业的糖尿病风险评估和健康建议</p>
+                </div>
+
+                <form id="diabetes-form" method="POST" action="{{ url_for('generate_report') }}" class="space-y-6">
+                    <!-- 个人基本信息 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2 fade-in">
+                            <label for="age" class="block text-sm font-medium text-gray-700">年龄 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-calendar text-gray-400"></i>
+                                </div>
+                                <input type="number" id="age" name="age" min="1" max="120" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                                    placeholder="请输入您的年龄">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 fade-in delay-100">
+                            <label for="gender" class="block text-sm font-medium text-gray-700">性别 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-user text-gray-400"></i>
+                                </div>
+                                <select id="gender" name="gender" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                                    <option value="">请选择性别</option>
+                                    <option value="1">男</option>
+                                    <option value="2">女</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 身高体重计算BMI -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2 fade-in delay-200">
+                            <label for="height" class="block text-sm font-medium text-gray-700">身高(cm) <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-arrows-v text-gray-400"></i>
+                                </div>
+                                <input type="number" id="height" name="height" min="1" max="250" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                                    placeholder="请输入您的身高" oninput="calculateBMI()">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 fade-in delay-300">
+                            <label for="weight" class="block text-sm font-medium text-gray-700">体重(kg) <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-balance-scale text-gray-400"></i>
+                                </div>
+                                <input type="number" id="weight" name="weight" min="1" max="300" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                                    placeholder="请输入您的体重" oninput="calculateBMI()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BMI显示 -->
+                    <div class="space-y-2 fade-in delay-400">
+                        <label class="block text-sm font-medium text-gray-700">BMI指数</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa fa-balance-scale text-gray-400"></i>
+                            </div>
+                            <input type="text" id="bmi" name="bmi" readonly
+                                class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-gray-50 text-gray-700 focus:outline-none transition-all"
+                                placeholder="输入身高体重后自动计算">
+                        </div>
+                        <div id="bmi-category" class="text-sm text-gray-600 pl-10 mt-1"></div>
+                    </div>
+
+                    <!-- 腰围 -->
+                    <div class="space-y-2 fade-in delay-500">
+                        <label for="waist" class="block text-sm font-medium text-gray-700">腰围(cm) <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa fa-arrows-h text-gray-400"></i>
+                            </div>
+                            <input type="number" id="waist" name="waist" min="1" max="200" required
+                                class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                                placeholder="请输入您的腰围">
+                        </div>
+                    </div>
+
+                    <!-- 生活习惯 -->
+                    <div class="space-y-4 fade-in delay-100">
+                        <h3 class="text-lg font-semibold text-gray-800">生活习惯</h3>
+                        
+                        <div class="space-y-2">
+                            <label for="activity" class="block text-sm font-medium text-gray-700">每周体育活动频率 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-bicycle text-gray-400"></i>
+                                </div>
+                                <select id="activity" name="activity" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                                    <option value="">请选择活动频率</option>
+                                    <option value="1">几乎不活动（每周少于1次）</option>
+                                    <option value="2">轻度活动（每周1-2次）</option>
+                                    <option value="3">中度活动（每周3-5次）</option>
+                                    <option value="4">重度活动（每周6-7次）</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="insomnia" class="block text-sm font-medium text-gray-700">每月失眠天数 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-moon-o text-gray-400"></i>
+                                </div>
+                                <select id="insomnia" name="insomnia" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                                    <option value="">请选择失眠频率</option>
+                                    <option value="0">0天</option>
+                                    <option value="1">1-2天</option>
+                                    <option value="3">3-5天</option>
+                                    <option value="6">6-10天</option>
+                                    <option value="11">11-15天</option>
+                                    <option value="16">16天以上</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="alcohol" class="block text-sm font-medium text-gray-700">每周饮酒次数 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-glass text-gray-400"></i>
+                                </div>
+                                <select id="alcohol" name="alcohol" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                                    <option value="">请选择饮酒频率</option>
+                                    <option value="0">从不饮酒</option>
+                                    <option value="1">每月1-2次</option>
+                                    <option value="2">每周1-2次</option>
+                                    <option value="3">每周3-4次</option>
+                                    <option value="4">每周5次以上</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="smoking" class="block text-sm font-medium text-gray-700">吸烟状况 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-smoking text-gray-400"></i>
+                                </div>
+                                <select id="smoking" name="smoking" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                                    <option value="">请选择吸烟状况</option>
+                                    <option value="1">每天吸烟</option>
+                                    <option value="2">偶尔吸烟</option>
+                                    <option value="3">从不吸烟</option>
+                                    <option value="4">已戒烟</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 健康状况 -->
+                    <div class="space-y-4 fade-in delay-200">
+                        <h3 class="text-lg font-semibold text-gray-800">健康状况</h3>
+                        
+                        <div class="space-y-2">
+                            <label for="family_history" class="block text-sm font-medium text-gray-700">糖尿病家族史 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-users text-gray-400"></i>
+                                </div>
+                                <select id="family_history" name="family_history" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                                    <option value="">请选择</option>
+                                    <option value="1">父母或兄弟姐妹有糖尿病</option>
+                                    <option value="2">没有</option>
+                                    <option value="3">不确定</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="high_chol" class="block text-sm font-medium text-gray-700">高胆固醇 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-heartbeat text-gray-400"></i>
+                                </div>
+                                <select id="high_chol" name="high_chol" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                                    <option value="">请选择</option>
+                                    <option value="1">是</option>
+                                    <option value="2">否</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="high_bp" class="block text-sm font-medium text-gray-700">高血压 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-heartbeat text-gray-400"></i>
+                                </div>
+                                <select id="high_bp" name="high_bp" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                                    <option value="">请选择</option>
+                                    <option value="1">是</option>
+                                    <option value="2">否</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label for="metabolic_syndrome" class="block text-sm font-medium text-gray-700">代谢综合征 <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa fa-heartbeat text-gray-400"></i>
+                                </div>
+                                <select id="metabolic_syndrome" name="metabolic_syndrome" required
+                                    class="pl-10 block w-full rounded-lg border border-gray-300 py-3 px-4 bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                                    <option value="">请选择</option>
+                                    <option value="1">是</option>
+                                    <option value="2">否</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 fade-in delay-300">
+                        <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all transform hover:-translate-y-1 hover:shadow-lg flex items-center justify-center">
+                            <i class="fa fa-calculator mr-2"></i> 计算我的糖尿病风险
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- 关于糖尿病 -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-4">了解糖尿病</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">糖尿病是一种常见的慢性疾病，影响全球数亿人口。了解糖尿病的风险因素和预防措施对健康至关重要。</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-bg-light rounded-xl p-6 shadow-card scale-hover card-reveal">
+                        <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa fa-info-circle text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">什么是糖尿病？</h3>
+                        <p class="text-gray-600">糖尿病是一种代谢性疾病，特征是血糖水平长期升高。主要分为1型、2型和妊娠糖尿病。</p>
+                    </div>
+
+                    <div class="bg-bg-light rounded-xl p-6 shadow-card scale-hover card-reveal" style="transition-delay: 0.2s">
+                        <div class="w-14 h-14 bg-warning/10 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa fa-exclamation-triangle text-warning text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">风险因素</h3>
+                        <p class="text-gray-600">糖尿病的风险因素包括遗传、肥胖、缺乏运动、高血压、高胆固醇等。</p>
+                    </div>
+
+                    <div class="bg-bg-light rounded-xl p-6 shadow-card scale-hover card-reveal" style="transition-delay: 0.4s">
+                        <div class="w-14 h-14 bg-secondary/10 rounded-full flex items-center justify-center mb-4">
+                            <i class="fa fa-shield text-secondary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">预防措施</h3>
+                        <p class="text-gray-600">健康饮食、适量运动、控制体重、定期体检是预防糖尿病的有效措施。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 常见问题 -->
+    <section class="py-16 bg-bg-light">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800 mb-4">常见问题</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">以下是用户对糖尿病风险评估的常见疑问</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-card p-6 scale-hover card-reveal">
+                        <button class="w-full flex justify-between items-center text-left focus:outline-none">
+                            <h3 class="text-lg font-semibold text-gray-800">这个评估有多准确？</h3>
+                            <i class="fa fa-chevron-down text-gray-400 transition-transform"></i>
+                        </button>
+                        <div class="mt-4 text-gray-600">
+                            <p>本评估基于机器学习模型，综合考虑多种风险因素。模型性能指标包括F1分数和AUC值，用于衡量预测准确性。但请注意，这只是风险评估，不能替代专业医疗诊断。</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-card p-6 scale-hover card-reveal" style="transition-delay: 0.1s">
+                        <button class="w-full flex justify-between items-center text-left focus:outline-none">
+                            <h3 class="text-lg font-semibold text-gray-800">评估结果意味着什么？</h3>
+                            <i class="fa fa-chevron-down text-gray-400 transition-transform"></i>
+                        </button>
+                        <div class="mt-4 text-gray-600">
+                            <p>评估结果显示您患糖尿病的相对风险。高风险意味着需要立即采取措施，如咨询医生和改变生活方式；中风险需要关注健康状况并定期检查；低风险建议保持健康生活方式。</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-card p-6 scale-hover card-reveal" style="transition-delay: 0.2s">
+                        <button class="w-full flex justify-between items-center text-left focus:outline-none">
+                            <h3 class="text-lg font-semibold text-gray-800">如何降低糖尿病风险？</h3>
+                            <i class="fa fa-chevron-down text-gray-400 transition-transform"></i>
+                        </button>
+                        <div class="mt-4 text-gray-600">
+                            <p>降低糖尿病风险的主要方法包括：保持健康体重、均衡饮食、规律运动、戒烟限酒、控制血压和胆固醇水平，以及定期体检。</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-card p-6 scale-hover card-reveal" style="transition-delay: 0.3s">
+                        <button class="w-full flex justify-between items-center text-left focus:outline-none">
+                            <h3 class="text-lg font-semibold text-gray-800">评估结果会保存吗？</h3>
+                            <i class="fa fa-chevron-down text-gray-400 transition-transform"></i>
+                        </button>
+                        <div class="mt-4 text-gray-600">
+                            <p>我们不会自动保存您的评估结果。您可以通过点击报告页面上的"下载报告"按钮保存您的评估结果和健康建议。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fa fa-heartbeat text-primary text-2xl"></i>
+                        <span class="text-xl font-bold">健康卫士</span>
+                    </div>
+                    <p class="text-gray-400 mb-4">提供专业的健康风险评估和个性化健康建议，帮助您预防疾病，保持健康生活。</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-weibo text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-wechat text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-facebook text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">快速链接</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">首页</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">关于糖尿病</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">健康资讯</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">联系我们</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">资源中心</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">糖尿病指南</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">健康食谱</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">运动建议</a></li>
+                        <li><a href="#" class="text-gray-400 hover:text-white transition-colors">常见问题</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">联系我们</h4>
+                    <ul class="space-y-2">
+                        <li class="flex items-center text-gray-400">
+                            <i class="fa fa-map-marker mr-2"></i>
+                            <span>北京市海淀区中关村南大街5号</span>
+                        </li>
+                        <li class="flex items-center text-gray-400">
+                            <i class="fa fa-phone mr-2"></i>
+                            <span>400-123-4567</span>
+                        </li>
+                        <li class="flex items-center text-gray-400">
+                            <i class="fa fa-envelope mr-2"></i>
+                            <span>contact@healthguard.com</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>© 2023 健康卫士. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 10) {
+                navbar.classList.add('shadow-md', 'py-2');
+                navbar.classList.remove('py-3');
+            } else {
+                navbar.classList.remove('shadow-md', 'py-2');
+                navbar.classList.add('py-3');
+            }
+        });
+
+        // BMI计算函数
+        function calculateBMI() {
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            const bmiInput = document.getElementById('bmi');
+            const bmiCategory = document.getElementById('bmi-category');
+
+            if (height && weight) {
+                const heightInMeters = height / 100;
+                const bmi = weight / (heightInMeters * heightInMeters);
+                bmiInput.value = bmi.toFixed(1);
+                
+                // 设置BMI分类和颜色
+                let category = '';
+                let color = '';
+                
+                if (bmi < 18.5) {
+                    category = '体重不足';
+                    color = 'text-blue-500';
+                } else if (bmi < 25) {
+                    category = '正常范围';
+                    color = 'text-green-500';
+                } else if (bmi < 30) {
+                    category = '超重';
+                    color = 'text-yellow-500';
+                } else {
+                    category = '肥胖';
+                    color = 'text-red-500';
+                }
+                
+                bmiCategory.className = `text-sm ${color} pl-10 mt-1`;
+                bmiCategory.textContent = `BMI分类: ${category}`;
+                
+                // 自动填充BMI到表单
+                document.querySelector('input[name="bmi"]').value = bmi.toFixed(1);
+            } else {
+                bmiInput.value = '';
+                bmiCategory.textContent = '';
+            }
+        }
+
+        // 卡片显示动画
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.card-reveal');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+        });
+
+        // 常见问题折叠功能
+        document.querySelectorAll('.card-reveal button').forEach(button => {
+            button.addEventListener('click', function() {
+                const content = this.nextElementSibling;
+                const icon = this.querySelector('i');
+                
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                    icon.classList.remove('rotate-180');
+                } else {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    icon.classList.add('rotate-180');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+    

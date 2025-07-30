@@ -1,0 +1,266 @@
+/* 基础样式 */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f7fa;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2, h3 {
+    color: #2c3e50;
+}
+
+/* 表单样式 */
+.form-group {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+input[type="number"],
+input[type="text"],
+select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.radio-group input {
+    margin-right: 5px;
+}
+
+.bmi-info {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.bmi-info span {
+    margin-right: 15px;
+    font-weight: bold;
+}
+
+.bmi-scale {
+    flex-grow: 1;
+    display: flex;
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.bmi-scale span {
+    flex: 1;
+    text-align: center;
+    font-size: 0.8em;
+    padding: 0 5px;
+    line-height: 20px;
+    color: white;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+}
+
+.underweight { background-color: #3498db; }
+.normal { background-color: #2ecc71; }
+.overweight { background-color: #f39c12; }
+.obese { background-color: #e74c3c; }
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+/* 报告页面样式 */
+.report-container {
+    background: white;
+    padding: 30px;
+}
+
+.report-header {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    border-left: 5px solid;
+}
+
+.risk-level {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.risk-level h2 {
+    margin: 0;
+}
+
+.risk-score {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.score-bar {
+    width: 200px;
+    height: 15px;
+    background: #ecf0f1;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.score-fill {
+    height: 100%;
+    background: #e74c3c;
+    transition: width 1s ease-in-out;
+}
+
+.report-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.indicators-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.indicator {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.indicator .label {
+    display: block;
+    font-size: 0.9em;
+    color: #7f8c8d;
+    margin-bottom: 5px;
+}
+
+.indicator .value {
+    display: block;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.risk-factors, .advice {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    white-space: pre-line;
+}
+
+.risk-factors ul, .advice ul {
+    padding-left: 20px;
+    margin: 10px 0;
+}
+
+.risk-factors li, .advice li {
+    margin-bottom: 5px;
+}
+
+.report-footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    font-size: 0.9em;
+    color: #7f8c8d;
+}
+
+.report-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+/* 风险等级颜色 */
+.高危 .risk-level {
+    border-left-color: #e74c3c;
+}
+
+.高危 .score-fill {
+    background: #e74c3c;
+}
+
+.中危 .risk-level {
+    border-left-color: #f39c12;
+}
+
+.中危 .score-fill {
+    background: #f39c12;
+}
+
+.低危 .risk-level {
+    border-left-color: #2ecc71;
+}
+
+.低危 .score-fill {
+    background: #2ecc71;
+}

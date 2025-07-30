@@ -1,0 +1,82 @@
+/* 基础样式 */
+body {
+    scroll-behavior: smooth;
+}
+
+/* 自定义动画 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+/* 延迟动画 */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c9cdd4;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #86909c;
+}
+
+/* 打印样式优化 */
+@media print {
+    body {
+        background-color: white;
+    }
+    
+    .no-print {
+        display: none !important;
+    }
+    
+    .bg-gradient-blue {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .text-white {
+        color: black !important;
+    }
+    
+    .rounded-xl {
+        border-radius: 0 !important;
+    }
+    
+    .shadow-card {
+        box-shadow: none !important;
+    }
+    
+    a {
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+    
+    .risk-indicator, .risk-progress {
+        border: 1px solid #ccc !important;
+        height: 10px !important;
+    }
+    
+    .risk-progress {
+        background-color: #ccc !important;
+    }
+}    
